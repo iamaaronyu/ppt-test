@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tmux 使用指南 · 从入门到实战</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色: 🍂 牛皮纸 (Kraft Paper) ============ */
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+  body.low-power canvas.bg{display:none!important}
+
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;letter-spacing:0;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .meta-row{display:flex;gap:1.2em;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:max(12px,.92vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img>img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{display:block;margin-top:.8vh;font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.6}
+
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+  body.low-power #hint{opacity:.72;color:var(--paper);mix-blend-mode:normal}
+  body.light-bg.low-power #hint{color:var(--ink)}
+
+  /* ============ LAYOUTS API ============ */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .frame.grid-2-7-5,.frame.grid-2-6-6,.frame.grid-2-8-4,.frame.grid-3-3,.frame.grid-6{display:grid}
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  .stat-card{display:flex;flex-direction:column;gap:.8vh;align-items:flex-start;padding-top:1.6vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.3)}
+  .stat-card .stat-label{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .stat-card .stat-nb{font-family:var(--serif-en);font-weight:800;font-size:5.8vw;line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum";margin-top:.4vh}
+  .stat-card .stat-note{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.5;opacity:.72;margin-top:.6vh}
+
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:2.4vh 2vw}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .fill{flex:1}
+
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .callout-src{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* pipeline */
+  .pipeline-section{margin-top:4.4vh;padding-top:2.8vh;border-top:1px dashed rgba(127,127,127,.32)}
+  .pipeline-section:first-of-type{border-top:0;padding-top:0;margin-top:3vh}
+  .pipeline-label{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.24em;text-transform:uppercase;opacity:.62;margin-bottom:2.2vh}
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw}
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .step{display:flex;flex-direction:column;gap:.8vh;padding-top:1.4vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .step-nb{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:1.15vw;opacity:.45}
+  .step-title{font-family:var(--sans-zh);font-weight:700;font-size:1.55vw;letter-spacing:.01em;line-height:1.2}
+  .step-desc{font-family:var(--sans-zh);font-weight:400;font-size:max(12px,.95vw);line-height:1.45;opacity:.72}
+
+  code{font-family:var(--mono);font-size:.82em;letter-spacing:.02em;background:rgba(127,127,127,.12);padding:.12em .4em;border-radius:2px}
+  .slide.dark code{background:rgba(255,255,255,.1)}
+
+  /* ============ 动效 ============ */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+  body.low-power #deck{transition:none!important}
+  body.low-power *,
+  body.low-power *::before,
+  body.low-power *::after{animation:none!important;transition:none!important}
+  body.low-power.motion-ready [data-anim],
+  body.low-power [data-anim]{opacity:1!important;transform:none!important}
+
+  @media (max-width:900px){
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<script>
+  (function(){
+    const KEY='guizang-ppt-low-power';
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stored=localStorage.getItem(KEY);
+    window.__lowPowerMode=stored==='1'||(stored===null&&reduced);
+    function updateHint(){
+      const hint=document.getElementById('hint');
+      if(hint) hint.textContent=`← → 翻页 · B ${window.__lowPowerMode?'动态':'静态'} · ESC 索引`;
+    }
+    window.__setLowPowerMode=function(on,opts={}){
+      window.__lowPowerMode=!!on;
+      document.body.classList.toggle('low-power',window.__lowPowerMode);
+      if(opts.persist!==false) localStorage.setItem(KEY,window.__lowPowerMode?'1':'0');
+      if(window.__lowPowerMode&&document.getAnimations) document.getAnimations().forEach(a=>a.cancel());
+      updateHint();
+      dispatchEvent(new CustomEvent('ppt-low-power-change',{detail:{on:window.__lowPowerMode}}));
+      if(window.__playSlide) window.__playSlide(window.__currentSlideIndex||0);
+    };
+    document.body.classList.toggle('low-power',window.__lowPowerMode);
+    addEventListener('DOMContentLoaded',updateHint,{once:true});
+  })();
+</script>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · B 静态 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ================================================================
+     Page 1 · 封面
+     ================================================================ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>终端工具深度指南 · 2026</div>
+    <div>Vol.03</div>
+  </div>
+  <div class="frame" style="display:grid; gap:4vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>从入门到实战</div>
+    <h1 class="h-hero" data-anim>Tmux</h1>
+    <h2 class="h-sub" data-anim>使用指南</h2>
+    <p class="lead" style="max-width:60vw" data-anim>
+      远程开发、AI 训练与服务器运维的<span class="hi">必备工具</span>。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>Terminal</span><span>→</span><span>Tmux</span><span>→</span><span>Session</span><span>→</span><span>Task</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>让任务脱离终端独立运行</div>
+    <div>— 2026 —</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 2 · 为什么需要 Tmux
+     ================================================================ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>痛点分析 · Pain Points</div>
+    <div>01 · 02 / 13</div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:6vh">
+    <div style="display:flex; flex-direction:column; justify-content:space-between; gap:3vh">
+      <div>
+        <div class="kicker" data-anim>Why Tmux?</div>
+        <h2 class="h-xl" data-anim>为什么需要<br>终端复用器？</h2>
+        <p class="lead" style="margin-top:3vh" data-anim>
+          传统终端存在致命缺陷：关闭窗口 → 任务终止。SSH 断开、网络波动、电脑休眠——任何一个都可能导致数小时的训练付诸东流。
+        </p>
+      </div>
+      <div style="margin-top:2vh" data-anim>
+        <div class="kicker" style="margin-bottom:1.4vh; font-size:10px">典型受害场景</div>
+        <div style="display:flex; gap:1vw; flex-wrap:wrap">
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.55;padding:8px 14px;border:1px solid rgba(127,127,127,.3)">AI 模型训练</span>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.55;padding:8px 14px;border:1px solid rgba(127,127,127,.3)">数据合成</span>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.55;padding:8px 14px;border:1px solid rgba(127,127,127,.3)">Claude Code</span>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.55;padding:8px 14px;border:1px solid rgba(127,127,127,.3)">Ray 集群</span>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.55;padding:8px 14px;border:1px solid rgba(127,127,127,.3)">远程运维</span>
+        </div>
+      </div>
+    </div>
+    <!-- 传统模式的悲剧流程图 -->
+    <div data-anim style="padding:3vh 2.5vw; border-left:3px solid rgba(127,127,127,.35); display:flex; flex-direction:column; gap:2vh">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;opacity:.5;margin-bottom:1vh">传统终端的悲剧</div>
+      <div style="font-family:var(--mono);font-size:max(12px,.9vw);letter-spacing:.1em;opacity:.8;text-align:center;padding:1.2vh 0;border:1px solid rgba(127,127,127,.2)">
+        Terminal
+      </div>
+      <div style="text-align:center;opacity:.35;font-size:1.5vw">↓</div>
+      <div style="font-family:var(--mono);font-size:max(12px,.9vw);letter-spacing:.1em;opacity:.8;text-align:center;padding:1.2vh 0;border:1px solid rgba(127,127,127,.2)">
+        SSH
+      </div>
+      <div style="text-align:center;opacity:.35;font-size:1.5vw">↓</div>
+      <div style="font-family:var(--mono);font-size:max(12px,.9vw);letter-spacing:.1em;opacity:.8;text-align:center;padding:1.2vh 0;border:1px solid rgba(127,127,127,.2)">
+        python train.py
+      </div>
+      <div style="text-align:center;opacity:.35;font-size:1.5vw">↓</div>
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.2vw);text-align:center;padding:1.6vh 0;color:#c44;opacity:.85">
+        断网 → Task Lost
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 02 · 为什么需要 Tmux</div>
+    <div>Problem</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 3 · Tmux 解决了什么问题（Before/After）
+     ================================================================ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome">
+    <div>解决方案 · The Solution</div>
+    <div>01 · 03 / 13</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Core Idea · 核心思想</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>
+      Session 与 Terminal <span class="hi">解耦</span>
+    </h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh">
+      <div data-anim="left" style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.55">
+        <div class="kicker" style="opacity:.9; font-size:10px">传统模式</div>
+        <div style="display:flex; flex-direction:column; gap:1.6vh; align-items:center; margin:3vh 0">
+          <div style="font-family:var(--mono);font-size:max(11px,.8vw);letter-spacing:.14em;padding:1.2vh 2vw;border:1px solid rgba(255,255,255,.2)">Terminal</div>
+          <div style="opacity:.3">↓</div>
+          <div style="font-family:var(--mono);font-size:max(11px,.8vw);letter-spacing:.14em;padding:1.2vh 2vw;border:1px solid rgba(255,255,255,.2)">Process</div>
+        </div>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.1vw);text-align:center;opacity:.75;margin-top:2vh">
+          关闭终端 → Process Exit
+        </div>
+      </div>
+
+      <div data-anim="right" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9; font-size:10px">Tmux 模式</div>
+        <div style="display:flex; flex-direction:column; gap:1.6vh; align-items:center; margin:3vh 0">
+          <div style="font-family:var(--mono);font-size:max(11px,.8vw);letter-spacing:.14em;padding:1.2vh 2vw;border:1px solid rgba(255,255,255,.2)">Terminal</div>
+          <div style="opacity:.3">↓</div>
+          <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(13px,1vw);padding:1.4vh 2vw;border:1px solid rgba(255,255,255,.4)">Tmux Session</div>
+          <div style="opacity:.3">↓</div>
+          <div style="font-family:var(--mono);font-size:max(11px,.8vw);letter-spacing:.14em;padding:1.2vh 2vw;border:1px solid rgba(255,255,255,.2)">Process</div>
+        </div>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.1vw);text-align:center;opacity:.9;margin-top:2vh">
+          关闭终端 → <span class="hi">Session Keep Running</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:4vh; gap:2vw" data-anim>
+      <div style="text-align:center; padding:1.6vh 1vw; border-top:1px solid rgba(255,255,255,.2)">
+        <div style="font-family:var(--serif-en);font-style:italic;font-size:2vw;opacity:.3;margin-bottom:.6vh">01</div>
+        <div style="font-family:var(--sans-zh);font-weight:700;font-size:max(13px,1vw)">断网不中断</div>
+      </div>
+      <div style="text-align:center; padding:1.6vh 1vw; border-top:1px solid rgba(255,255,255,.2)">
+        <div style="font-family:var(--serif-en);font-style:italic;font-size:2vw;opacity:.3;margin-bottom:.6vh">02</div>
+        <div style="font-family:var(--sans-zh);font-weight:700;font-size:max(13px,1vw)">任务持续运行</div>
+      </div>
+      <div style="text-align:center; padding:1.6vh 1vw; border-top:1px solid rgba(255,255,255,.2)">
+        <div style="font-family:var(--serif-en);font-style:italic;font-size:2vw;opacity:.3;margin-bottom:.6vh">03</div>
+        <div style="font-family:var(--sans-zh);font-weight:700;font-size:max(13px,1vw)">会话随时恢复</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 03 · Tmux 解决了什么</div>
+    <div>Solution</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 4 · 核心概念（章节幕封）
+     ================================================================ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第二幕 · 核心概念</div>
+    <div>02 · 04 / 13</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Core Concepts</div>
+    <h1 class="h-hero" style="font-size:8vw" data-anim>三层结构</h1>
+
+    <!-- 架构图 -->
+    <div data-anim style="display:flex; gap:2vw; align-items:center; justify-content:center; margin-top:2vh">
+      <div style="padding:2.4vh 2.4vw; border:1px solid rgba(127,127,127,.35); text-align:center; min-width:12vw">
+        <div style="font-family:var(--serif-en);font-weight:900;font-size:4.5vw;opacity:.1;line-height:1">S</div>
+        <div class="h-md" style="font-size:1.8vw;margin-top:-2.4vh">Session</div>
+        <div style="font-family:var(--sans-zh);font-size:max(11px,.85vw);opacity:.5;margin-top:.4vh">一个项目</div>
+      </div>
+      <div style="font-family:var(--serif-en);font-size:2vw;opacity:.2">→</div>
+      <div style="padding:2.4vh 2.4vw; border:1px solid rgba(127,127,127,.35); text-align:center; min-width:12vw">
+        <div style="font-family:var(--serif-en);font-weight:900;font-size:4.5vw;opacity:.1;line-height:1">W</div>
+        <div class="h-md" style="font-size:1.8vw;margin-top:-2.4vh">Window</div>
+        <div style="font-family:var(--sans-zh);font-size:max(11px,.85vw);opacity:.5;margin-top:.4vh">一个标签页</div>
+      </div>
+      <div style="font-family:var(--serif-en);font-size:2vw;opacity:.2">→</div>
+      <div style="padding:2.4vh 2.4vw; border:1px solid rgba(127,127,127,.35); text-align:center; min-width:12vw">
+        <div style="font-family:var(--serif-en);font-weight:900;font-size:4.5vw;opacity:.1;line-height:1">P</div>
+        <div class="h-md" style="font-size:1.8vw;margin-top:-2.4vh">Pane</div>
+        <div style="font-family:var(--sans-zh);font-size:max(11px,.85vw);opacity:.5;margin-top:.4vh">一个分屏</div>
+      </div>
+    </div>
+
+    <div style="font-family:var(--mono);font-size:max(11px,.82vw);letter-spacing:.16em;opacity:.35;text-align:center" data-anim>
+      Session → Window → Pane&emsp;|&emsp;从外到内，三层嵌套
+    </div>
+  </div>
+  <div class="foot">
+    <div>第二幕 · 核心概念</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 5 · 最简单的工作流（Pipeline）
+     ================================================================ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>快速上手 · Quick Workflow</div>
+    <div>02 · 05 / 13</div>
+  </div>
+  <div class="frame">
+    <div class="kicker">Workflow · 工作流</div>
+    <h2 class="h-xl">四步上手 Tmux</h2>
+
+    <div class="pipeline-section">
+      <div class="pipeline-label">最简单的工作流</div>
+      <div class="pipeline" data-cols="4">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">创建会话</div>
+          <div class="step-desc"><code>tmux new -s work</code></div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">运行任务</div>
+          <div class="step-desc"><code>python train.py</code></div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">分离会话</div>
+          <div class="step-desc"><code>Ctrl+B, D</code></div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">04</div>
+          <div class="step-title">重新连接</div>
+          <div class="step-desc"><code>tmux attach -t work</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:5vh; display:flex; gap:2vw; align-items:center; justify-content:center; opacity:.5; font-family:var(--mono); font-size:max(10px,.72vw); letter-spacing:.2em" data-anim>
+      <span>创建会话</span><span>→</span><span>运行任务</span><span>→</span><span>Detach</span><span>→</span><span>重新 Attach</span>
+    </div>
+
+    <div data-anim style="margin-top:5vh; text-align:center">
+      <div class="callout" style="display:inline-block; text-align:left; max-width:60vw">
+        "这四步就是 Tmux 日常使用的全部。一旦你习惯了 <code>Ctrl+B, D</code> 分离会话、<code>tmux attach</code> 恢复现场，裸终端就再也回不去了。"
+        <div class="callout-src">— Tmux 用户的心声</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 05 · 最简单的工作流</div>
+    <div>4 Steps</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 6 · Session 管理
+     ================================================================ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>会话管理 · Session Management</div>
+    <div>02 · 06 / 13</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Session · 会话</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>Session 管理:<br>会话的完整生命周期</h2>
+
+    <div class="grid-2-6-6" style="gap:4vh 5vw">
+      <!-- 左:命令 -->
+      <div data-anim>
+        <div class="pipeline-label">常用命令</div>
+        <div style="display:flex; flex-direction:column; gap:0">
+          <div class="rowline">
+            <div class="k" style="font-size:1.3vw">tmux new -s work</div>
+            <div class="v">创建会话</div>
+            <div class="m">new</div>
+          </div>
+          <div class="rowline">
+            <div class="k" style="font-size:1.3vw">tmux ls</div>
+            <div class="v">查看会话列表</div>
+            <div class="m">list</div>
+          </div>
+          <div class="rowline">
+            <div class="k" style="font-size:1.3vw">tmux attach -t work</div>
+            <div class="v">连接会话</div>
+            <div class="m">attach</div>
+          </div>
+          <div class="rowline">
+            <div class="k" style="font-size:1.3vw">tmux kill-session -t work</div>
+            <div class="v">删除会话</div>
+            <div class="m">kill</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右:快捷键 -->
+      <div data-anim>
+        <div class="pipeline-label">常用快捷键</div>
+        <div style="display:flex; flex-direction:column; gap:0">
+          <div class="rowline">
+            <div class="k" style="font-size:1.3vw">Ctrl+B, D</div>
+            <div class="v">分离会话（后台运行）</div>
+            <div class="m">detach</div>
+          </div>
+          <div class="rowline">
+            <div class="k" style="font-size:1.3vw">Ctrl+B, S</div>
+            <div class="v">可视化会话列表</div>
+            <div class="m">list</div>
+          </div>
+          <div class="rowline">
+            <div class="k" style="font-size:1.3vw">Ctrl+B, $</div>
+            <div class="v">重命名当前会话</div>
+            <div class="m">rename</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 06 · Session 管理</div>
+    <div>Session</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 7 · Window 管理
+     ================================================================ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>窗口管理 · Window Management</div>
+    <div>02 · 07 / 13</div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:6vh">
+    <div style="display:flex; flex-direction:column; justify-content:space-between; gap:3vh">
+      <div>
+        <div class="kicker" data-anim>Window · 窗口</div>
+        <h2 class="h-xl" data-anim>
+          一个 Session<br>多个 Window
+        </h2>
+        <p class="lead" style="margin-top:3vh" data-anim>
+          通过 Window 对不同工作内容进行隔离。就像浏览器 Tab——开发、日志、监控各自独立，互不干扰。
+        </p>
+        <div style="margin-top:3vh; font-family:var(--mono); font-size:max(11px,.85vw); letter-spacing:.14em; opacity:.6" data-anim>
+          work → editor / log / monitor
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:0" data-anim>
+      <div class="rowline">
+        <div class="k">Ctrl+B, C</div>
+        <div class="v">创建新窗口</div>
+        <div class="m">new-window</div>
+      </div>
+      <div class="rowline">
+        <div class="k">Ctrl+B, N</div>
+        <div class="v">下一个窗口</div>
+        <div class="m">next</div>
+      </div>
+      <div class="rowline">
+        <div class="k">Ctrl+B, P</div>
+        <div class="v">上一个窗口</div>
+        <div class="m">prev</div>
+      </div>
+      <div class="rowline">
+        <div class="k">Ctrl+B, W</div>
+        <div class="v">可视化窗口列表</div>
+        <div class="m">list</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 07 · Window 管理</div>
+    <div>Window</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 8 · Pane 管理
+     ================================================================ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>窗格管理 · Pane Management</div>
+    <div>02 · 08 / 13</div>
+  </div>
+  <div class="frame grid-2-8-4" style="padding-top:6vh">
+    <div>
+      <div class="kicker" data-anim>Pane · 窗格</div>
+      <h2 class="h-xl" style="margin-bottom:3vh" data-anim>分屏开发:<br>一屏监控一切</h2>
+
+      <!-- 分屏示意图 -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:6px; height:16vh; margin:3vh 0; opacity:.7" data-anim>
+        <div style="grid-column:1/3; border:1px solid rgba(255,255,255,.3); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:max(10px,.7vw); letter-spacing:.18em">Claude Code</div>
+        <div style="border:1px solid rgba(255,255,255,.3); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:max(10px,.7vw); letter-spacing:.18em">Log</div>
+        <div style="border:1px solid rgba(255,255,255,.3); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:max(10px,.7vw); letter-spacing:.18em">NPU</div>
+      </div>
+
+      <p class="lead" style="font-size:1.3vw; margin-top:2vh" data-anim>
+        上边 Claude Code，左下追日志，右下看 NPU——一个屏幕尽收眼底。
+      </p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:0" data-anim>
+      <div class="rowline">
+        <div class="k" style="font-size:1.2vw">Ctrl+B, %</div>
+        <div class="v">左右分屏</div>
+        <div class="m">split -h</div>
+      </div>
+      <div class="rowline">
+        <div class="k" style="font-size:1.2vw">Ctrl+B, "</div>
+        <div class="v">上下分屏</div>
+        <div class="m">split -v</div>
+      </div>
+      <div class="rowline">
+        <div class="k" style="font-size:1.2vw">Ctrl+B, ←↑↓→</div>
+        <div class="v">Pane 间切换</div>
+        <div class="m">navigate</div>
+      </div>
+      <div class="rowline">
+        <div class="k" style="font-size:1.2vw">Ctrl+B, Z</div>
+        <div class="v">最大化 / 恢复</div>
+        <div class="m">zoom</div>
+      </div>
+      <div class="rowline">
+        <div class="k" style="font-size:1.2vw">Ctrl+B, X</div>
+        <div class="v">关闭当前 Pane</div>
+        <div class="m">kill</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 08 · Pane 管理</div>
+    <div>Pane</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 9 · 实战：Claude Code + Tmux
+     ================================================================ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>实战场景 · Real-world</div>
+    <div>03 · 09 / 13</div>
+  </div>
+  <div class="frame" style="display:grid; gap:4vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Claude Code + Tmux</div>
+    <h1 class="h-hero" style="font-size:5.8vw; line-height:1.1" data-anim>
+      推荐架构
+    </h1>
+
+    <!-- 架构栈 -->
+    <div data-anim style="margin:2vh 0">
+      <div style="display:flex; flex-direction:column; gap:1vh; align-items:center; font-family:var(--mono); font-size:max(11px,.82vw); letter-spacing:.14em">
+        <div style="padding:1vh 3vw; border:1px solid rgba(255,255,255,.15); opacity:.5">Mac · iTerm2</div>
+        <div style="opacity:.25">↓</div>
+        <div style="padding:1vh 3vw; border:1px solid rgba(255,255,255,.15); opacity:.55">SSH</div>
+        <div style="opacity:.25">↓</div>
+        <div style="padding:1.2vh 3vw; border:1px solid rgba(255,255,255,.35); font-weight:700; opacity:.9">Tmux</div>
+        <div style="display:flex; gap:1.4vw; margin-top:1vh">
+          <div style="padding:.8vh 1.4vw; border:1px solid rgba(255,255,255,.2); opacity:.75; font-size:max(10px,.72vw)">Claude Code</div>
+          <div style="padding:.8vh 1.4vw; border:1px solid rgba(255,255,255,.2); opacity:.75; font-size:max(10px,.72vw)">Log</div>
+          <div style="padding:.8vh 1.4vw; border:1px solid rgba(255,255,255,.2); opacity:.75; font-size:max(10px,.72vw)">Monitor</div>
+          <div style="padding:.8vh 1.4vw; border:1px solid rgba(255,255,255,.2); opacity:.75; font-size:max(10px,.72vw)">Shell</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 三个 Window 的职责 -->
+    <div class="grid-3" style="gap:2.4vw; margin-top:2vh" data-anim>
+      <div style="padding:2vh 1.5vw; border-left:2px solid rgba(255,255,255,.2)">
+        <div class="h-md" style="font-size:1.4vw">Window 1</div>
+        <code style="display:block;margin-top:1vh;padding:.6vh .8vw;font-size:max(10px,.72vw)">claude</code>
+        <div style="font-family:var(--mono);font-size:9px;opacity:.4;margin-top:.6vh;letter-spacing:.14em">AI 编程主窗口</div>
+      </div>
+      <div style="padding:2vh 1.5vw; border-left:2px solid rgba(255,255,255,.2)">
+        <div class="h-md" style="font-size:1.4vw">Window 2</div>
+        <code style="display:block;margin-top:1vh;padding:.6vh .8vw;font-size:max(10px,.72vw)">tail -f log.txt</code>
+        <div style="font-family:var(--mono);font-size:9px;opacity:.4;margin-top:.6vh;letter-spacing:.14em">日志实时查看</div>
+      </div>
+      <div style="padding:2vh 1.5vw; border-left:2px solid rgba(255,255,255,.2)">
+        <div class="h-md" style="font-size:1.4vw">Window 3</div>
+        <code style="display:block;margin-top:1vh;padding:.6vh .8vw;font-size:max(10px,.72vw)">watch npu-smi info</code>
+        <div style="font-family:var(--mono);font-size:9px;opacity:.4;margin-top:.6vh;letter-spacing:.14em">资源持续监控</div>
+      </div>
+    </div>
+
+    <p class="lead" style="max-width:58vw;text-align:center;margin-inline:auto;font-size:1.3vw;opacity:.7" data-anim>
+      收益：Claude 不掉线 · 日志实时看 · SSH 断开可恢复 · 多任务并行管理
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 09 · Claude Code + Tmux</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 10 · 常见问题
+     ================================================================ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>常见问题 · FAQ</div>
+    <div>03 · 10 / 13</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Troubleshooting</div>
+    <h2 class="h-xl" style="margin-bottom:5vh" data-anim>常见问题</h2>
+
+    <div class="grid-2-6-6" style="gap:5vh 5vw">
+      <!-- 问题一 -->
+      <div data-anim style="padding:2.4vh 2.5vw; border-left:3px solid currentColor">
+        <div class="kicker" style="font-size:10px;margin-bottom:1.2vh">Problem 01</div>
+        <h3 class="h-md" style="font-size:1.6vw;margin-bottom:1.2vh">sessions should be nested with care</h3>
+        <p style="font-family:var(--sans-zh);font-size:max(13px,1vw);opacity:.76;line-height:1.6;margin-bottom:1vh">
+          执行 <code>tmux attach -t 3</code> 时报错。原因：当前已在 Tmux 中，不能嵌套 attach。
+        </p>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;opacity:.4;margin-bottom:.6vh">✅ 解决方案</div>
+        <code style="display:block;padding:.6vh .8vw;font-size:max(11px,.78vw)">tmux switch-client -t 3</code>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;opacity:.35;margin-top:.4vh">或: Ctrl+B, S 选择目标 Session</div>
+      </div>
+
+      <!-- 问题二 -->
+      <div data-anim style="padding:2.4vh 2.5vw; border-left:3px solid currentColor">
+        <div class="kicker" style="font-size:10px;margin-bottom:1.2vh">Problem 02</div>
+        <h3 class="h-md" style="font-size:1.6vw;margin-bottom:1.2vh">no server running</h3>
+        <p style="font-family:var(--sans-zh);font-size:max(13px,1vw);opacity:.76;line-height:1.6;margin-bottom:1vh">
+          执行 <code>tmux ls</code> 提示无服务。原因：当前没有存活的 Tmux Session。
+        </p>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;opacity:.4;margin-bottom:.6vh">✅ 解决方案</div>
+        <code style="display:block;padding:.6vh .8vw;font-size:max(11px,.78vw)">tmux new -s work</code>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;opacity:.35;margin-top:.4vh">重新创建会话即可</div>
+      </div>
+    </div>
+
+    <div data-anim style="margin-top:4vh; padding:2vh 2.5vw; border:1px solid rgba(127,127,127,.2); text-align:center">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.4;margin-bottom:.6vh">Quick Check</div>
+      <span style="font-family:var(--sans-zh);font-size:max(13px,1vw);opacity:.7">如何判断是否在 Tmux 中？</span>
+      <code style="margin-left:1.5vw;font-size:max(12px,.85vw)">echo $TMUX</code>
+      <span style="font-family:var(--mono);font-size:10px;opacity:.4;margin-left:1vw">有输出 = 在 Tmux 中</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 10 · 常见问题</div>
+    <div>FAQ</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 11 · 最佳实践
+     ================================================================ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>最佳实践 · Best Practices</div>
+    <div>03 · 11 / 13</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Best Practices</div>
+    <h2 class="h-xl" style="margin-bottom:5vh" data-anim>最佳实践</h2>
+
+    <div class="grid-2-6-6" style="gap:5vh 5vw">
+      <!-- 命名规范 -->
+      <div data-anim>
+        <div class="pipeline-label" style="margin-bottom:2vh">Session 命名规范</div>
+        <div class="grid-2-6-6" style="gap:2vh 2vw">
+          <div style="padding:2vh 1.5vw; border:1px solid rgba(255,255,255,.2)">
+            <div style="font-family:var(--mono);font-size:9px;letter-spacing:.2em;opacity:.4;margin-bottom:.8vh">✅ 推荐</div>
+            <div style="font-family:var(--mono);font-size:max(11px,.82vw);letter-spacing:.08em;opacity:.85;line-height:1.8">
+              claude<br>train<br>pdf<br>video<br>ray
+            </div>
+          </div>
+          <div style="padding:2vh 1.5vw; border:1px solid rgba(255,255,255,.12);opacity:.5">
+            <div style="font-family:var(--mono);font-size:9px;letter-spacing:.2em;opacity:.4;margin-bottom:.8vh">❌ 避免</div>
+            <div style="font-family:var(--mono);font-size:max(11px,.82vw);letter-spacing:.08em;opacity:.6;line-height:1.8">
+              0<br>1<br>2<br>3
+            </div>
+          </div>
+        </div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;opacity:.35;margin-top:1.2vh">一个项目一个 Session: claude-dev / pdf-pipeline / video-pipeline</div>
+      </div>
+
+      <!-- 长任务规则 -->
+      <div data-anim>
+        <div class="pipeline-label" style="margin-bottom:2vh">长任务必须放 Tmux</div>
+        <div style="display:flex; flex-direction:column; gap:1.2vh">
+          <div style="padding:1.2vh 1.5vw; border-left:2px solid rgba(255,255,255,.25); font-family:var(--sans-zh); font-size:max(13px,1vw); opacity:.8">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.4;margin-right:.8vw">01</span>模型训练
+          </div>
+          <div style="padding:1.2vh 1.5vw; border-left:2px solid rgba(255,255,255,.25); font-family:var(--sans-zh); font-size:max(13px,1vw); opacity:.8">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.4;margin-right:.8vw">02</span>推理任务
+          </div>
+          <div style="padding:1.2vh 1.5vw; border-left:2px solid rgba(255,255,255,.25); font-family:var(--sans-zh); font-size:max(13px,1vw); opacity:.8">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.4;margin-right:.8vw">03</span>数据处理
+          </div>
+          <div style="padding:1.2vh 1.5vw; border-left:2px solid rgba(255,255,255,.25); font-family:var(--sans-zh); font-size:max(13px,1vw); opacity:.8">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.4;margin-right:.8vw">04</span>日志监控
+          </div>
+          <div style="padding:1.2vh 1.5vw; border-left:2px solid rgba(255,255,255,.25); font-family:var(--sans-zh); font-size:max(13px,1vw); opacity:.8">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.4;margin-right:.8vw">05</span>Claude Code
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 11 · 最佳实践</div>
+    <div>Best Practices</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 12 · 总结
+     ================================================================ -->
+<section class="slide hero light" data-animate="quote">
+  <div class="chrome">
+    <div>总结 · Summary</div>
+    <div>03 · 12 / 13</div>
+  </div>
+  <div class="frame" style="display:grid; gap:4vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Takeaway</div>
+    <blockquote style="font-family:var(--serif-zh);font-weight:700;font-size:5vw;line-height:1.18;letter-spacing:-.01em;max-width:80vw">
+      <span data-anim="line" style="display:block">Tmux 的本质是让任务</span>
+      <span data-anim="line" style="display:block">脱离终端独立运行。</span>
+    </blockquote>
+
+    <!-- 4 个核心命令 -->
+    <div style="display:flex; gap:1.5vw; justify-content:center; flex-wrap:wrap; margin-top:3vh" data-anim>
+      <code style="padding:1vh 1.4vw;font-size:max(12px,.88vw);background:rgba(127,127,127,.08)">tmux new -s work</code>
+      <code style="padding:1vh 1.4vw;font-size:max(12px,.88vw);background:rgba(127,127,127,.08)">tmux ls</code>
+      <code style="padding:1vh 1.4vw;font-size:max(12px,.88vw);background:rgba(127,127,127,.08)">tmux attach -t work</code>
+      <code style="padding:1vh 1.4vw;font-size:max(12px,.88vw);background:rgba(127,127,127,.08)">tmux kill-session -t work</code>
+    </div>
+
+    <!-- Ctrl+B, D -->
+    <div data-anim style="text-align:center;margin-top:2vh">
+      <div style="display:inline-block;padding:1.6vh 3vw;border:2px solid rgba(127,127,127,.35)">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.4;margin-bottom:.4vh">唯一快捷键</div>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:3vw;letter-spacing:.02em">Ctrl+B, D</div>
+      </div>
+    </div>
+
+    <p class="lead" style="text-align:center;margin-inline:auto;opacity:.65" data-anim>
+      安全离开，任务继续——远程开发与长任务运行不中断。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 12 · 总结</div>
+    <div>— fin —</div>
+  </div>
+</section>
+
+<!-- ================================================================
+     Page 13 · 附录：团队推荐开发环境
+     ================================================================ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>附录 · Appendix</div>
+    <div>03 · 13 / 13</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Team Setup</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>推荐开发环境</h2>
+
+    <div class="grid-2-7-5" style="gap:4vh 5vw">
+      <!-- 左:推荐组合 + 工作流 -->
+      <div>
+        <!-- 组合 -->
+        <div data-anim style="margin-bottom:4vh">
+          <div class="pipeline-label" style="margin-bottom:1.8vh">推荐工具组合</div>
+          <div style="display:flex; gap:1.2vw; flex-wrap:wrap">
+            <span style="font-family:var(--mono);font-size:max(10px,.75vw);letter-spacing:.2em;padding:10px 16px;border:1px solid rgba(255,255,255,.2)">iTerm2</span>
+            <span style="opacity:.35;font-size:1.2vw">+</span>
+            <span style="font-family:var(--mono);font-size:max(10px,.75vw);letter-spacing:.2em;padding:10px 16px;border:1px solid rgba(255,255,255,.35);font-weight:700">Tmux</span>
+            <span style="opacity:.35;font-size:1.2vw">+</span>
+            <span style="font-family:var(--mono);font-size:max(10px,.75vw);letter-spacing:.2em;padding:10px 16px;border:1px solid rgba(255,255,255,.2)">SSH</span>
+            <span style="opacity:.35;font-size:1.2vw">+</span>
+            <span style="font-family:var(--mono);font-size:max(10px,.75vw);letter-spacing:.2em;padding:10px 16px;border:1px solid rgba(255,255,255,.2)">Claude Code</span>
+            <span style="opacity:.35;font-size:1.2vw">+</span>
+            <span style="font-family:var(--mono);font-size:max(10px,.75vw);letter-spacing:.2em;padding:10px 16px;border:1px solid rgba(255,255,255,.2)">Git</span>
+          </div>
+        </div>
+
+        <!-- 工作流 -->
+        <div data-anim>
+          <div class="pipeline-label" style="margin-bottom:1.8vh">推荐工作流</div>
+          <div style="display:flex; flex-direction:column; gap:.8vh; font-family:var(--mono); font-size:max(11px,.8vw); letter-spacing:.12em; opacity:.7">
+            <div>① 打开 iTerm2</div>
+            <div style="opacity:.25">↓</div>
+            <div>② 连接服务器</div>
+            <div style="opacity:.25">↓</div>
+            <div>③ 进入 Tmux</div>
+            <div style="opacity:.25">↓</div>
+            <div>④ 启动 Claude Code</div>
+            <div style="opacity:.25">↓</div>
+            <div>⑤ 新建 Log 窗口</div>
+            <div style="opacity:.25">↓</div>
+            <div>⑥ 新建 Monitor 窗口</div>
+            <div style="opacity:.25">↓</div>
+            <div style="font-weight:700;opacity:1">⑦ 开始开发</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：最终收益 -->
+      <div data-anim style="padding:3vh 2.5vw; border-left:3px solid rgba(255,255,255,.25)">
+        <div class="pipeline-label" style="margin-bottom:2vh">最终收益</div>
+        <div style="display:flex; flex-direction:column; gap:1.8vh">
+          <div style="font-family:var(--sans-zh);font-size:max(13px,1vw);opacity:.82;line-height:1.6">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.35;margin-right:.8vw">→</span>开发不中断
+          </div>
+          <div style="font-family:var(--sans-zh);font-size:max(13px,1vw);opacity:.82;line-height:1.6">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.35;margin-right:.8vw">→</span>训练不中断
+          </div>
+          <div style="font-family:var(--sans-zh);font-size:max(13px,1vw);opacity:.82;line-height:1.6">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.35;margin-right:.8vw">→</span>SSH 断开可恢复
+          </div>
+          <div style="font-family:var(--sans-zh);font-size:max(13px,1vw);opacity:.82;line-height:1.6">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.35;margin-right:.8vw">→</span>多任务并行管理
+          </div>
+          <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(15px,1.2vw);line-height:1.6;margin-top:.8vh">
+            <span style="font-family:var(--serif-en);font-style:italic;opacity:.35;margin-right:.8vw">→</span>提升远程开发效率
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 13 · 附录</div>
+    <div>Team Setup</div>
+  </div>
+</section>
+
+</div><!-- /deck -->
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 =============== */
+const VS=`attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+const FS_DARK=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+const FS_LIGHT=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId,fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+let drawDark=null,drawLight=null,glRAF=0,glT0=Date.now();
+function startGL(){
+  if(window.__lowPowerMode||glRAF) return;
+  if(!drawDark) drawDark=bootGL('bg-dark',FS_DARK);
+  if(!drawLight) drawLight=bootGL('bg-light',FS_LIGHT);
+  glT0=Date.now();
+  function loop(){
+    if(window.__lowPowerMode){glRAF=0;return;}
+    const t=(Date.now()-glT0)/1000;
+    drawDark(t);drawLight(t);
+    glRAF=requestAnimationFrame(loop);
+  }
+  glRAF=requestAnimationFrame(loop);
+}
+function stopGL(){
+  if(glRAF) cancelAnimationFrame(glRAF);
+  glRAF=0;
+}
+startGL();
+addEventListener('ppt-low-power-change',e=>{e.detail.on?stopGL():startGL();});
+
+// =============== 导航 ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  window.__currentSlideIndex=idx;
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx];
+  const th=el.dataset.theme||(el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx),450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(e.key&&e.key.toLowerCase()==='b'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
+    e.preventDefault();
+    window.__setLowPowerMode(!window.__lowPowerMode);
+    return;
+  }
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance&&window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0&&window.__pipeAdvance&&window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0&&window.__pipeAdvance&&window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<script type="module">
+let motion;
+try {
+  motion=await import('./assets/motion.min.js');
+} catch(e1){
+  try {
+    motion=await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2){
+    console.warn('[motion] local + CDN both failed',e1,e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const {animate,stagger}=motion;
+  document.body.classList.add('motion-ready');
+  const EASE=[.22,1,.36,1];
+  const slidesAll=[...document.querySelectorAll('.slide')];
+  let pipeStep=-1,lastIdx=-1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='';el.style.transform=''});
+  }
+  function revealStatic(slide){
+    resetAnims(slide);
+    document.getAnimations?.().forEach(a=>a.cancel());
+    slide.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+  }
+
+  function playSlide(i){
+    const slide=slidesAll[i];
+    if(!slide) return;
+    lastIdx=i;
+    const recipe=slide.dataset.animate||(slide.classList.contains('hero')?'hero':'cascade');
+    if(window.__lowPowerMode){revealStatic(slide);return;}
+
+    if(recipe==='pipeline'){
+      pipeStep=-1;
+      slide.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='0.15';el.style.transform='none'});
+      return;
+    }
+
+    resetAnims(slide);
+    const all=[...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe==='directional'){
+      const lefts=all.filter(el=>el.dataset.anim==='left');
+      const divs=all.filter(el=>el.dataset.anim==='divider');
+      const rights=all.filter(el=>el.dataset.anim==='right');
+      const others=all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others,{opacity:[0,1],y:[12,0]},{duration:.6,delay:stagger(.1,{start:.15}),easing:EASE});
+      if(lefts.length)  animate(lefts,{opacity:[0,1],x:[-24,0]},{duration:.8,delay:.35,easing:EASE});
+      if(divs.length)   animate(divs,{opacity:[0,.25]},{duration:.5,delay:.9});
+      if(rights.length) animate(rights,{opacity:[0,1],x:[24,0]},{duration:.8,delay:1.0,easing:EASE});
+      return;
+    }
+    if(recipe==='quote'){
+      const lines=all.filter(el=>el.dataset.anim==='line');
+      const others=all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others,{opacity:[0,1],y:[8,0]},{duration:.6,delay:stagger(.12,{start:.2}),easing:EASE});
+      if(lines.length)  animate(lines,{opacity:[.35,1],y:[10,0]},{duration:.8,delay:stagger(.55,{start:.5}),easing:EASE});
+      return;
+    }
+    if(recipe==='hero'){
+      animate(all,{opacity:[0,1],y:[14,0]},{duration:.9,delay:stagger(.16,{start:.2}),easing:EASE});
+      return;
+    }
+    animate(all,{opacity:[0,1],y:[16,0]},{duration:.75,delay:stagger(.1,{start:.15}),easing:EASE});
+  }
+
+  function pipeAdvance(){
+    if(window.__lowPowerMode) return false;
+    const slide=slidesAll[lastIdx];
+    if(!slide||slide.dataset.animate!=='pipeline') return false;
+    const steps=[...slide.querySelectorAll('[data-anim="step"]')];
+    if(pipeStep>=steps.length-1) return false;
+    pipeStep++;
+    animate(steps[pipeStep],{opacity:[0.15,1],y:[8,0]},{duration:.5,easing:EASE});
+    return true;
+  }
+
+  window.__playSlide=playSlide;
+  window.__pipeAdvance=pipeAdvance;
+  playSlide(0);
+}
+</script>
+</body>
+</html>
