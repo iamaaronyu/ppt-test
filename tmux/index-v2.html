@@ -103,7 +103,7 @@
   .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
   .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
   .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
-  img-cap{display:block;margin-top:.8vh;font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.6}
+  .img-cap{display:block;margin-top:.8vh;font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.6}
   figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
   figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
 
@@ -225,7 +225,8 @@
   (function(){
     const KEY='guizang-ppt-low-power';
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const stored=localStorage.getItem(KEY);
+    let stored = null;
+    try { stored = localStorage.getItem(KEY); } catch(e) { /* localStorage unavailable */ }
     window.__lowPowerMode=stored==='1'||(stored===null&&reduced);
     function updateHint(){
       const hint=document.getElementById('hint');
@@ -234,7 +235,7 @@
     window.__setLowPowerMode=function(on,opts={}){
       window.__lowPowerMode=!!on;
       document.body.classList.toggle('low-power',window.__lowPowerMode);
-      if(opts.persist!==false) localStorage.setItem(KEY,window.__lowPowerMode?'1':'0');
+      if(opts.persist!==false) { try { localStorage.setItem(KEY,window.__lowPowerMode?'1':'0'); } catch(e) {} }
       if(window.__lowPowerMode&&document.getAnimations) document.getAnimations().forEach(a=>a.cancel());
       updateHint();
       dispatchEvent(new CustomEvent('ppt-low-power-change',{detail:{on:window.__lowPowerMode}}));
@@ -300,7 +301,7 @@
     </div>
     <figure class="frame-img r-4x3" data-anim>
       <img src="images/02-overview.png" alt="Tmux 概览"
-           onerror="this.style.display='none';this.parentElement.innerHTML='<div style=display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border:1.5px+dashed+rgba(127,127,127,.4);font-family:var(--mono);font-size:10px;letter-spacing:.28em;opacity:.55;text-transform:uppercase;text-align:center;padding:2vh><div><span style=font-size:3vw;display:block;margin-bottom:1vh>⊞</span>放置 Tmux 界面截图<br>02-overview.png</div></div>'">
+           onerror="this.style.display='none';var p=this.parentElement;var cap=p.querySelector('figcaption');p.innerHTML='<div style=display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border:1.5px dashed rgba(127,127,127,.4);font-family:var(--mono);font-size:10px;letter-spacing:.28em;opacity:.55;text-transform:uppercase;text-align:center;padding:2vh><div><span style=font-size:3vw;display:block;margin-bottom:1vh>⊞</span>放置 Tmux 界面截图<br>02-overview.png</div></div>';if(cap)p.appendChild(cap)">
       <figcaption class="img-cap">Tmux · 多面板工作区</figcaption>
     </figure>
   </div>
@@ -1027,11 +1028,13 @@ function bootGL(canvasId,fsSrc){
   const canvas=document.getElementById(canvasId);
   const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
   if(!gl) return ()=>false;
-  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))console.warn('WebGL shader compile error:',gl.getShaderInfoLog(sh));return sh};
   const prog=gl.createProgram();
   gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
   gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
-  gl.linkProgram(prog);gl.useProgram(prog);
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS))console.warn('WebGL program link error:',gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
   const buf=gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER,buf);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
@@ -1054,15 +1057,15 @@ function bootGL(canvasId,fsSrc){
     return true;
   };
 }
-let drawDark=null,drawLight=null,glRAF=0,glT0=Date.now();
+let drawDark=null,drawLight=null,glRAF=0,glT0=performance.now();
 function startGL(){
   if(window.__lowPowerMode||glRAF) return;
   if(!drawDark) drawDark=bootGL('bg-dark',FS_DARK);
   if(!drawLight) drawLight=bootGL('bg-light',FS_LIGHT);
-  glT0=Date.now();
+  glT0=performance.now();
   function loop(){
     if(window.__lowPowerMode){glRAF=0;return;}
-    const t=(Date.now()-glT0)/1000;
+    const t=(performance.now()-glT0)/1000;
     drawDark(t);drawLight(t);
     glRAF=requestAnimationFrame(loop);
   }
@@ -1099,7 +1102,7 @@ function go(n){
   const th=el.dataset.theme||(el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
   document.body.classList.toggle('light-bg',th==='light');
   if(window.__playSlide) setTimeout(()=>window.__playSlide(idx),450);
-  lock=true;setTimeout(()=>lock=false,700);
+  lock=true;setTimeout(()=>lock=false,950);
 }
 
 /* =============== ESC 索引视图 =============== */
@@ -1185,7 +1188,7 @@ addEventListener('touchend',e=>{
 go(0);
 </script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-<script>lucide.createIcons();</script>
+<script>if(typeof lucide!=='undefined') lucide.createIcons();</script>
 
 <script type="module">
 let motion;
@@ -1238,7 +1241,7 @@ if(motion){
 
     if(recipe==='pipeline'){
       pipeStep=-1;
-      slide.querySelectorAll('[data-anim]').forEach(el=>{
+      slide.querySelectorAll('[data-anim="step"]').forEach(el=>{
         el.style.opacity='0.15';
         el.style.transform='none';
       });
