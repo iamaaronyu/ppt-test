@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>tmux · 常用命令工作流</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/tokens.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 960pt; height: 540pt; overflow: hidden; margin: 0;
+    background: var(--tk-bg);
+    font-family: var(--tk-sans);
+    color: var(--tk-ink);
+    position: relative;
+  }
+  .layout {
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: 250pt 1fr;
+    grid-template-rows: 1fr;
+    position: relative;
+  }
+  /* ---- Left panel ---- */
+  .left-panel {
+    padding: 44pt 26pt 40pt 48pt;
+    display: flex; flex-direction: column; justify-content: center; gap: 0;
+    border-right: 1px solid var(--tk-accent-16);
+  }
+  .section-label { margin-bottom: 24pt; }
+  .section-label p { font-family: var(--tk-sans); font-size:7pt; font-weight:500; letter-spacing:2.5pt; text-transform:uppercase; color:var(--tk-accent); opacity:0.78; }
+  .section-num { margin-bottom: 8pt; }
+  .section-num p { font-family: var(--tk-sans); font-size:8.5pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.06em; }
+  .main-title { margin-bottom: 10pt; }
+  .main-title h1 { font-family: var(--tk-serif-zh); font-size:26pt; font-weight:600; color:var(--tk-title); line-height:1.22; letter-spacing:0.01em; }
+  .main-desc { margin-bottom: 28pt; max-width:185pt; }
+  .main-desc p { font-family: var(--tk-sans); font-size:9pt; font-weight:400; color:var(--tk-muted); line-height:1.65; letter-spacing:0.02em; }
+  /* insight */
+  .insight-card {
+    background: rgba(255,255,255,0.5); border-radius:10pt; padding:14pt 16pt;
+    border:1px solid rgba(168,181,160,0.18); max-width:185pt;
+  }
+  .insight-card .ins-label p { font-family: var(--tk-sans); font-size:6.5pt; font-weight:500; letter-spacing:1.5pt; text-transform:uppercase; color:var(--tk-light-green); margin-bottom:7pt; }
+  .insight-card .ins-text p { font-family: var(--tk-serif-zh); font-size:8.5pt; font-weight:400; color:var(--tk-gray); line-height:1.65; }
+  /* ---- Right panel ---- */
+  .right-panel {
+    padding: 36pt 44pt 32pt 32pt;
+    display: flex; flex-direction: column; justify-content: center; gap: 14pt;
+  }
+  .pipe-section { display:flex; flex-direction:column; gap:6pt; }
+  .pipe-label p { font-family: var(--tk-sans); font-size:6.5pt; font-weight:500; letter-spacing:2pt; text-transform:uppercase; color:var(--tk-light-green); }
+  .pipe-row { display:grid; grid-template-columns:repeat(5,1fr); gap:8pt; }
+  .step-card {
+    background: rgba(255,255,255,0.5); border-radius:8pt;
+    padding:12pt 13pt; border:1px solid rgba(168,181,160,0.13);
+    display:flex; flex-direction:column; gap:0;
+  }
+  .step-card .step-num p { font-family: var(--tk-sans); font-size:8pt; font-weight:300; color:var(--tk-warm-gray); margin-bottom:5pt; font-style:italic; }
+  .step-card .step-title h3 { font-family: var(--tk-serif-zh); font-size:10pt; font-weight:600; color:var(--tk-title); margin-bottom:4pt; }
+  .step-card .step-code p { font-family: var(--tk-mono); font-size:7pt; font-weight:400; color:var(--tk-accent); line-height:1.45; }
+  .page-indicator { position:absolute; bottom:28pt; right:44pt; }
+  .page-indicator p { font-family: var(--tk-sans); font-size:7.5pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="left-panel">
+    <div class="section-label"><p>Act I · 常用命令</p></div>
+    <div class="section-num"><p>Essential Commands</p></div>
+    <div class="main-title"><h1>从创建<br>到恢复</h1></div>
+    <div class="main-desc">
+      <p>tmux 的命令行设计遵循一致的命名模式。记住两条主干：Session 的生命周期管理，和 Window/Pane 的日常操作。</p>
+    </div>
+    <div class="insight-card">
+      <div class="ins-label"><p>提示</p></div>
+      <div class="ins-text"><p>所有 tmux 命令都支持 tab 补全。输入 tmux 后按 Tab 即可浏览全部子命令。</p></div>
+    </div>
+  </div>
+  <div class="right-panel">
+    <!-- Session -->
+    <div class="pipe-section">
+      <div class="pipe-label"><p>Session · 会话管理</p></div>
+      <div class="pipe-row">
+        <div class="step-card">
+          <div class="step-num"><p>01</p></div>
+          <div class="step-title"><h3>新建会话</h3></div>
+          <div class="step-code"><p>tmux new -s name</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>02</p></div>
+          <div class="step-title"><h3>分离会话</h3></div>
+          <div class="step-code"><p>Ctrl+B, D</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>03</p></div>
+          <div class="step-title"><h3>列出会话</h3></div>
+          <div class="step-code"><p>tmux ls</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>04</p></div>
+          <div class="step-title"><h3>重新接入</h3></div>
+          <div class="step-code"><p>tmux attach -t name</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>05</p></div>
+          <div class="step-title"><h3>杀掉会话</h3></div>
+          <div class="step-code"><p>tmux kill-session</p></div>
+        </div>
+      </div>
+    </div>
+    <!-- Window & Pane -->
+    <div class="pipe-section">
+      <div class="pipe-label"><p>Window &amp; Pane · 窗口与面板</p></div>
+      <div class="pipe-row">
+        <div class="step-card">
+          <div class="step-num"><p>06</p></div>
+          <div class="step-title"><h3>新建窗口</h3></div>
+          <div class="step-code"><p>Ctrl+B, C</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>07</p></div>
+          <div class="step-title"><h3>水平分屏</h3></div>
+          <div class="step-code"><p>Ctrl+B, "</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>08</p></div>
+          <div class="step-title"><h3>垂直分屏</h3></div>
+          <div class="step-code"><p>Ctrl+B, %</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>09</p></div>
+          <div class="step-title"><h3>切换面板</h3></div>
+          <div class="step-code"><p>Ctrl+B, ←↑↓→</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num"><p>10</p></div>
+          <div class="step-title"><h3>关闭面板</h3></div>
+          <div class="step-code"><p>exit 或 Ctrl+D</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-indicator"><p>04 / 09</p></div>
+</body>
+</html>

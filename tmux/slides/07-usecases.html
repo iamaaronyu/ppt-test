@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>tmux · 实际使用场景</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/tokens.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 960pt; height: 540pt; overflow: hidden; margin: 0;
+    background: var(--tk-bg);
+    font-family: var(--tk-sans);
+    color: var(--tk-ink);
+    position: relative;
+  }
+  .layout {
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: 250pt 1fr;
+    grid-template-rows: 1fr;
+    position: relative;
+  }
+  /* ---- Left panel ---- */
+  .left-panel {
+    padding: 46pt 26pt 42pt 48pt;
+    display: flex; flex-direction: column; justify-content: center; gap: 0;
+    border-right: 1px solid var(--tk-accent-16);
+  }
+  .section-label { margin-bottom: 24pt; }
+  .section-label p { font-family: var(--tk-sans); font-size:7pt; font-weight:500; letter-spacing:2.5pt; text-transform:uppercase; color:var(--tk-accent); opacity:0.78; }
+  .section-num { margin-bottom: 8pt; }
+  .section-num p { font-family: var(--tk-sans); font-size:8.5pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.06em; }
+  .main-title { margin-bottom: 10pt; }
+  .main-title h1 { font-family: var(--tk-serif-zh); font-size:26pt; font-weight:600; color:var(--tk-title); line-height:1.22; letter-spacing:0.01em; }
+  .main-desc { margin-bottom: 26pt; max-width:185pt; }
+  .main-desc p { font-family: var(--tk-sans); font-size:9pt; font-weight:400; color:var(--tk-muted); line-height:1.65; letter-spacing:0.02em; }
+  /* insight */
+  .insight-card {
+    background: rgba(255,255,255,0.5); border-radius:10pt; padding:14pt 16pt;
+    border:1px solid rgba(168,181,160,0.18); max-width:185pt;
+  }
+  .insight-card .ins-label p { font-family: var(--tk-sans); font-size:6.5pt; font-weight:500; letter-spacing:1.5pt; text-transform:uppercase; color:var(--tk-light-green); margin-bottom:7pt; }
+  .insight-card .ins-text p { font-family: var(--tk-serif-zh); font-size:8.5pt; font-weight:400; color:var(--tk-gray); line-height:1.65; }
+  /* ---- Right panel ---- */
+  .right-panel {
+    padding: 38pt 44pt 30pt 28pt;
+    display: flex; flex-direction: column; justify-content: center; gap: 0;
+  }
+  .case-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10pt;
+  }
+  .case-card {
+    background: rgba(255,255,255,0.5); border-radius:10pt;
+    padding:14pt 15pt; border:1px solid rgba(168,181,160,0.13);
+    display:flex; flex-direction:column; gap:0;
+  }
+  .case-card .case-accent { width:18pt; height:1.5pt; background:var(--tk-accent); opacity:0.3; border-radius:1pt; margin-bottom:10pt; }
+  .case-card .case-title h3 { font-family: var(--tk-serif-zh); font-size:10.5pt; font-weight:600; color:var(--tk-title); margin-bottom:5pt; }
+  .case-card .case-desc p { font-family: var(--tk-sans); font-size:7.5pt; font-weight:400; color:var(--tk-muted); line-height:1.55; }
+  .page-indicator { position:absolute; bottom:28pt; right:44pt; }
+  .page-indicator p { font-family: var(--tk-sans); font-size:7.5pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="left-panel">
+    <div class="section-label"><p>Act II · 实际场景</p></div>
+    <div class="section-num"><p>Real-world Usage</p></div>
+    <div class="main-title"><h1>每个人都在<br>用 tmux 做什么</h1></div>
+    <div class="main-desc">
+      <p>从个人开发者到运维团队，tmux 的六个经典使用场景——覆盖了日常工作的方方面面。</p>
+    </div>
+    <div class="insight-card">
+      <div class="ins-label"><p>共通点</p></div>
+      <div class="ins-text"><p>所有场景都围绕同一个核心：让终端工作区脱离 SSH 连接的物理限制，成为独立存在的「虚拟桌面」。</p></div>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="case-grid">
+      <div class="case-card">
+        <div class="case-accent"></div>
+        <div class="case-title"><h3>远程开发</h3></div>
+        <div class="case-desc"><p>SSH 到开发机，在 tmux Session 中打开 Vim、数据库客户端、日志监控。网络断了也不怕。</p></div>
+      </div>
+      <div class="case-card">
+        <div class="case-accent"></div>
+        <div class="case-title"><h3>长期监控</h3></div>
+        <div class="case-desc"><p>htop 看资源、tail -f 追日志、watch 定时刷新——三个 Pane 并排，关掉终端监控继续。</p></div>
+      </div>
+      <div class="case-card">
+        <div class="case-accent"></div>
+        <div class="case-title"><h3>结对编程</h3></div>
+        <div class="case-desc"><p>两人同时 attach 到同一个 tmux Session，输入同步显示——最轻量的远程协作方案。</p></div>
+      </div>
+      <div class="case-card">
+        <div class="case-accent"></div>
+        <div class="case-title"><h3>部署与运维</h3></div>
+        <div class="case-desc"><p>生产服务器上开 tmux Session 执行部署。网络抖动不中断——运维基本素养。</p></div>
+      </div>
+      <div class="case-card">
+        <div class="case-accent"></div>
+        <div class="case-title"><h3>工作区持久化</h3></div>
+        <div class="case-desc"><p>用 tmux 脚本或插件保存完整工作区布局，重启机器后一键恢复所有窗口和分屏。</p></div>
+      </div>
+      <div class="case-card">
+        <div class="case-accent"></div>
+        <div class="case-title"><h3>多任务并行</h3></div>
+        <div class="case-desc"><p>Window 1 跑测试，Window 2 写代码，Window 3 看文档——Ctrl+B, N 秒切上下文。</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-indicator"><p>07 / 09</p></div>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>tmux · 核心概念 — 三大支柱</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/tokens.css">
+<style>
+  /* ============================================================
+     Takram · tmux Core Concepts — 三层模型卡片
+     Grammar: 左叙事面板 + 右三列数据卡片
+     PPTX ready: 960pt×540pt, 无渐变, 文字全在 p/h* 内
+     ============================================================ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 960pt;
+    height: 540pt;
+    overflow: hidden;
+    margin: 0;
+    background: var(--tk-bg);
+    font-family: var(--tk-sans);
+    color: var(--tk-ink);
+    position: relative;
+  }
+
+  /* ---- Layout grid ---- */
+  .layout {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 250pt 1fr;
+    grid-template-rows: 1fr;
+    position: relative;
+  }
+
+  /* ---- Left panel ---- */
+  .left-panel {
+    padding: 48pt 30pt 44pt 48pt;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    border-right: 1px solid var(--tk-accent-16);
+  }
+
+  .section-label p {
+    font-family: var(--tk-sans);
+    font-size: 7pt;
+    font-weight: 500;
+    letter-spacing: 2.5pt;
+    text-transform: uppercase;
+    color: var(--tk-accent);
+    opacity: 0.78;
+    margin-bottom: 28pt;
+  }
+
+  .section-num p {
+    font-family: var(--tk-sans);
+    font-size: 9pt;
+    font-weight: 300;
+    color: var(--tk-faint);
+    letter-spacing: 0.06em;
+    margin-bottom: 10pt;
+  }
+
+  .main-title h1 {
+    font-family: var(--tk-serif-zh);
+    font-size: 30pt;
+    font-weight: 600;
+    color: var(--tk-title);
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+    margin-bottom: 14pt;
+  }
+
+  .main-desc p {
+    font-family: var(--tk-sans);
+    font-size: 9.5pt;
+    font-weight: 400;
+    color: var(--tk-muted);
+    line-height: 1.65;
+    letter-spacing: 0.02em;
+    max-width: 195pt;
+    margin-bottom: 32pt;
+  }
+
+  /* Key insight card (left panel) */
+  .insight-card {
+    background: var(--tk-card-bg);
+    border-radius: 10pt;
+    padding: 16pt 18pt;
+    border: 1px solid var(--tk-card-border-strong);
+    max-width: 195pt;
+  }
+  .insight-card .insight-label p {
+    font-family: var(--tk-sans);
+    font-size: 6.5pt;
+    font-weight: 500;
+    letter-spacing: 1.5pt;
+    text-transform: uppercase;
+    color: var(--tk-light-green);
+    margin-bottom: 8pt;
+  }
+  .insight-card .insight-text p {
+    font-family: var(--tk-serif-zh);
+    font-size: 9pt;
+    font-weight: 400;
+    color: var(--tk-gray);
+    line-height: 1.7;
+  }
+
+  /* ---- Right panel: 3 concept cards ---- */
+  .right-panel {
+    padding: 44pt 44pt 36pt 36pt;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16pt;
+    width: 100%;
+  }
+
+  /* Concept card */
+  .concept-card {
+    background: var(--tk-card-bg-strong);
+    border-radius: 12pt;
+    padding: 22pt 20pt 20pt 20pt;
+    border: 1px solid var(--tk-card-border);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Top accent line */
+  .concept-card .card-accent {
+    width: 24pt;
+    height: 2pt;
+    background: var(--tk-accent);
+    opacity: 0.35;
+    border-radius: 1pt;
+    margin-bottom: 18pt;
+  }
+
+  .concept-card .card-layer p {
+    font-family: var(--tk-sans);
+    font-size: 6.5pt;
+    font-weight: 500;
+    letter-spacing: 1.8pt;
+    text-transform: uppercase;
+    color: var(--tk-light-green);
+    margin-bottom: 5pt;
+  }
+
+  .concept-card .card-title h3 {
+    font-family: var(--tk-serif-zh);
+    font-size: 16pt;
+    font-weight: 600;
+    color: var(--tk-title);
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    margin-bottom: 10pt;
+  }
+
+  .concept-card .card-desc p {
+    font-family: var(--tk-sans);
+    font-size: 8pt;
+    font-weight: 400;
+    color: var(--tk-muted);
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---- Page indicator ---- */
+  .page-indicator {
+    position: absolute;
+    bottom: 28pt;
+    right: 44pt;
+  }
+  .page-indicator p {
+    font-family: var(--tk-sans);
+    font-size: 7.5pt;
+    font-weight: 300;
+    color: var(--tk-faint);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- ============ Left Panel: 叙事 ============ -->
+  <div class="left-panel">
+
+    <div class="section-label">
+      <p>Act I · 核心概念</p>
+    </div>
+
+    <div class="section-num">
+      <p>Core Concepts</p>
+    </div>
+
+    <div class="main-title">
+      <h1>三大支柱</h1>
+    </div>
+
+    <div class="main-desc">
+      <p>
+        tmux 的层级模型极其清晰。理解这三个概念，就理解了 tmux 的全部——从最外层的持久会话，到最内层的分屏操作。
+      </p>
+    </div>
+
+    <!-- Key insight -->
+    <div class="insight-card">
+      <div class="insight-label">
+        <p>核心哲学</p>
+      </div>
+      <div class="insight-text">
+        <p>
+          每一层都是上一层「状态的容器」。Session 承载 Window，Window 承载 Pane——分离时整棵树原地存活。
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ Right Panel: 三张概念卡片 ============ -->
+  <div class="right-panel">
+
+    <div class="card-grid">
+
+      <!-- Card 1: Session -->
+      <div class="concept-card">
+        <div class="card-accent"></div>
+        <div class="card-layer">
+          <p>Layer 1 · 最外层</p>
+        </div>
+        <div class="card-title">
+          <h3>Session</h3>
+        </div>
+        <div class="card-desc">
+          <p>
+            会话是最顶层的容器。一个 Session 包含多个 Window。你可以 detach（分离）一个 Session——断开连接后它仍在后台运行。这就是 tmux 最核心的价值。
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 2: Window -->
+      <div class="concept-card">
+        <div class="card-accent"></div>
+        <div class="card-layer">
+          <p>Layer 2 · 中间层</p>
+        </div>
+        <div class="card-title">
+          <h3>Window</h3>
+        </div>
+        <div class="card-desc">
+          <p>
+            窗口类似于浏览器 Tab。每个 Window 占据整个屏幕，你可以在不同 Window 之间切换。一个 Session 可以管理数十个 Window。
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 3: Pane -->
+      <div class="concept-card">
+        <div class="card-accent"></div>
+        <div class="card-layer">
+          <p>Layer 3 · 最内层</p>
+        </div>
+        <div class="card-title">
+          <h3>Pane</h3>
+        </div>
+        <div class="card-desc">
+          <p>
+            面板是 Window 内的分屏。可以把 Window 切成左右、上下、任意组合的 Pane，每个运行独立的 shell——实现真正的「一屏多用」。
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Page indicator -->
+<div class="page-indicator">
+  <p>03 / 09</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>tmux · 有 tmux vs 没有 tmux</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/tokens.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 960pt; height: 540pt; overflow: hidden; margin: 0;
+    background: var(--tk-bg);
+    font-family: var(--tk-sans);
+    color: var(--tk-ink);
+    position: relative;
+  }
+  .layout {
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: 250pt 1fr;
+    grid-template-rows: 1fr;
+    position: relative;
+  }
+  /* ---- Left panel ---- */
+  .left-panel {
+    padding: 48pt 26pt 44pt 48pt;
+    display: flex; flex-direction: column; justify-content: center; gap: 0;
+    border-right: 1px solid var(--tk-accent-16);
+  }
+  .section-label { margin-bottom: 26pt; }
+  .section-label p { font-family: var(--tk-sans); font-size:7pt; font-weight:500; letter-spacing:2.5pt; text-transform:uppercase; color:var(--tk-accent); opacity:0.78; }
+  .section-num { margin-bottom: 8pt; }
+  .section-num p { font-family: var(--tk-sans); font-size:8.5pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.06em; }
+  .main-title { margin-bottom: 10pt; }
+  .main-title h1 { font-family: var(--tk-serif-zh); font-size:26pt; font-weight:600; color:var(--tk-title); line-height:1.22; letter-spacing:0.01em; }
+  .main-desc { margin-bottom: 28pt; max-width:185pt; }
+  .main-desc p { font-family: var(--tk-sans); font-size:9pt; font-weight:400; color:var(--tk-muted); line-height:1.65; letter-spacing:0.02em; }
+  /* ---- Right panel: two comparison columns ---- */
+  .right-panel {
+    padding: 40pt 44pt 32pt 28pt;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18pt;
+    align-content: center;
+  }
+  .comp-col {
+    display:flex; flex-direction:column; gap:0;
+    border-radius:12pt; padding:22pt 20pt;
+  }
+  .comp-col.before {
+    background: rgba(255,255,255,0.35);
+    border:1px solid rgba(168,181,160,0.10);
+  }
+  .comp-col.after {
+    background: rgba(107,143,113,0.05);
+    border:1px solid rgba(107,143,113,0.16);
+  }
+  .comp-label { margin-bottom:14pt; }
+  .comp-label p { font-family: var(--tk-sans); font-size:6.5pt; font-weight:500; letter-spacing:2pt; text-transform:uppercase; }
+  .comp-col.before .comp-label p { color:var(--tk-faint); }
+  .comp-col.after .comp-label p { color:var(--tk-accent); }
+  .comp-title { margin-bottom:14pt; }
+  .comp-title h3 { font-family: var(--tk-serif-zh); font-size:14pt; font-weight:600; color:var(--tk-title); }
+  .comp-list { display:flex; flex-direction:column; gap:8pt; }
+  .comp-item { display:flex; align-items:flex-start; gap:8pt; }
+  .comp-item .mark {
+    width:14pt; height:14pt; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; margin-top:2pt;
+  }
+  .comp-col.before .mark { background:rgba(200,194,184,0.25); }
+  .comp-col.after .mark { background:rgba(107,143,113,0.12); }
+  .mark p { font-family: var(--tk-sans); font-size:7pt; font-weight:500; }
+  .comp-col.before .mark p { color:var(--tk-warm-gray); }
+  .comp-col.after .mark p { color:var(--tk-accent); }
+  .comp-item .ci-text p { font-family: var(--tk-sans); font-size:8.5pt; font-weight:400; line-height:1.55; }
+  .comp-col.before .ci-text p { color:var(--tk-warm-gray); }
+  .comp-col.after .ci-text p { color:var(--tk-dark-gray); }
+  .page-indicator { position:absolute; bottom:28pt; right:44pt; }
+  .page-indicator p { font-family: var(--tk-sans); font-size:7.5pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="left-panel">
+    <div class="section-label"><p>Act II · 效率对比</p></div>
+    <div class="section-num"><p>Before &amp; After</p></div>
+    <div class="main-title"><h1>有了 tmux<br>一切都变了</h1></div>
+    <div class="main-desc">
+      <p>同样的远程工作场景，没有 tmux 和有了 tmux 之后，是两种完全不同的体验。</p>
+    </div>
+  </div>
+  <div class="right-panel">
+    <!-- Before column -->
+    <div class="comp-col before">
+      <div class="comp-label"><p>Before · 没有 tmux</p></div>
+      <div class="comp-title"><h3>多窗口地狱</h3></div>
+      <div class="comp-list">
+        <div class="comp-item"><div class="mark"><p>×</p></div><div class="ci-text"><p>SSH 断开 → 所有任务丢失</p></div></div>
+        <div class="comp-item"><div class="mark"><p>×</p></div><div class="ci-text"><p>需要开 N 个终端窗口来回切换</p></div></div>
+        <div class="comp-item"><div class="mark"><p>×</p></div><div class="ci-text"><p>无法一屏同时看日志 + 编辑代码</p></div></div>
+        <div class="comp-item"><div class="mark"><p>×</p></div><div class="ci-text"><p>长任务跑一半，网络抖动全白费</p></div></div>
+        <div class="comp-item"><div class="mark"><p>×</p></div><div class="ci-text"><p>团队协作靠“你帮我看看这台机器”</p></div></div>
+      </div>
+    </div>
+    <!-- After column -->
+    <div class="comp-col after">
+      <div class="comp-label"><p>After · 有了 tmux</p></div>
+      <div class="comp-title"><h3>一切尽在掌控</h3></div>
+      <div class="comp-list">
+        <div class="comp-item"><div class="mark"><p>✓</p></div><div class="ci-text"><p>SSH 断开重连 → 会话完好如初</p></div></div>
+        <div class="comp-item"><div class="mark"><p>✓</p></div><div class="ci-text"><p>一个终端窗口管理所有 Session</p></div></div>
+        <div class="comp-item"><div class="mark"><p>✓</p></div><div class="ci-text"><p>分屏：左看日志，右写代码，顶跑监控</p></div></div>
+        <div class="comp-item"><div class="mark"><p>✓</p></div><div class="ci-text"><p>长任务安心跑，关电脑也不中断</p></div></div>
+        <div class="comp-item"><div class="mark"><p>✓</p></div><div class="ci-text"><p>Pair programming：两人接入同一 Session</p></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-indicator"><p>06 / 09</p></div>
+</body>
+</html>

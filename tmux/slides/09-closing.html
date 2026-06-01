@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>tmux · 结尾金句</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/tokens.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 960pt; height: 540pt; overflow: hidden; margin: 0;
+    background: var(--tk-bg);
+    font-family: var(--tk-sans);
+    color: var(--tk-ink);
+    position: relative;
+  }
+  .layout {
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    position: relative;
+  }
+  /* ---- Left panel: quote ---- */
+  .left-panel {
+    padding: 56pt 0 52pt 56pt;
+    display: flex; flex-direction: column; justify-content: center; gap: 0;
+    border-right: 1px solid var(--tk-accent-14);
+  }
+  .kicker { margin-bottom: 32pt; }
+  .kicker p { font-family: var(--tk-sans); font-size:7pt; font-weight:500; letter-spacing:2.5pt; text-transform:uppercase; color:var(--tk-accent); opacity:0.78; }
+  .quote-block { margin-bottom: 22pt; }
+  .quote-block h1 { font-family: var(--tk-serif-zh); font-size:28pt; font-weight:700; color:var(--tk-title); line-height:1.35; letter-spacing:0.02em; }
+  .quote-en { margin-bottom: 28pt; }
+  .quote-en p { font-family: var(--tk-sans); font-size:10pt; font-weight:300; color:var(--tk-warm-gray); line-height:1.6; letter-spacing:0.04em; font-style:italic; }
+  .attribution p { font-family: var(--tk-serif-zh); font-size:9pt; font-weight:400; color:var(--tk-muted); }
+  .attribution .attr-url { margin-top:5pt; }
+  .attr-url p { font-family: var(--tk-mono); font-size:7.5pt; font-weight:400; color:var(--tk-faint); letter-spacing:0.04em; }
+  /* ---- Right panel: atmosphere ---- */
+  .right-panel {
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .atmo-circle {
+    position: absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:260pt; height:260pt; border-radius:50%;
+    border:1px solid rgba(107,143,113,0.08);
+  }
+  .atmo-circle-inner {
+    position: absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:150pt; height:150pt; border-radius:50%;
+    border:1px solid rgba(107,143,113,0.05);
+  }
+  .atmo-glyph { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
+  .atmo-glyph p { font-family: var(--tk-mono); font-size:120pt; font-weight:400; color:rgba(107,143,113,0.035); letter-spacing:-0.04em; line-height:1; }
+  /* ---- End tag ---- */
+  .end-tag { position:absolute; bottom:36pt; left:50%; transform:translateX(-50%); }
+  .end-tag p { font-family: var(--tk-sans); font-size:8pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.2em; }
+  .page-indicator { position:absolute; bottom:28pt; right:44pt; }
+  .page-indicator p { font-family: var(--tk-sans); font-size:7.5pt; font-weight:300; color:var(--tk-faint); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="left-panel">
+    <div class="kicker"><p>One Last Thing</p></div>
+    <div class="quote-block">
+      <h1>“一旦你习惯了<br>tmux，裸终端就<br>再也回不去了。”</h1>
+    </div>
+    <div class="quote-en">
+      <p>Once you go tmux, you never go back.<br/>从今天开始，给你的终端一个永不失联的家。</p>
+    </div>
+    <div class="attribution">
+      <p>— tmux 用户共识</p>
+      <div class="attr-url"><p>github.com/tmux/tmux</p></div>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="atmo-circle"></div>
+    <div class="atmo-circle-inner"></div>
+    <div class="atmo-glyph"><p>$</p></div>
+  </div>
+</div>
+<div class="end-tag"><p>— fin —</p></div>
+<div class="page-indicator"><p>09 / 09</p></div>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>tmux · 终端复用器完全指南 — 封面</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared/tokens.css">
+<style>
+  /* ============================================================
+     Takram · tmux Cover — 柔和科技风格
+     Grammar: 左叙事面板 + 右留白氛围区
+     PPTX ready: 960pt×540pt, 无渐变, 文字全在 p/h* 内
+     ============================================================ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 960pt;
+    height: 540pt;
+    overflow: hidden;
+    margin: 0;
+    background: var(--tk-bg);
+    font-family: var(--tk-sans);
+    color: var(--tk-ink);
+    position: relative;
+  }
+
+  /* ---- Layout grid: 不对称分栏 ---- */
+  .layout {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 250pt 1fr;
+    grid-template-rows: 1fr;
+    position: relative;
+  }
+
+  /* ---- Left panel: 叙事区 ---- */
+  .left-panel {
+    padding: 56pt 36pt 52pt 52pt;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    border-right: 1px solid var(--tk-accent-16);
+  }
+
+  .category-label {
+    margin-bottom: 36pt;
+  }
+  .category-label p {
+    font-family: var(--tk-sans);
+    font-size: 7.5pt;
+    font-weight: 500;
+    letter-spacing: 2.5pt;
+    text-transform: uppercase;
+    color: var(--tk-accent);
+    opacity: 0.82;
+  }
+
+  .title-block {
+    margin-bottom: 18pt;
+  }
+  .title-block h1 {
+    font-family: var(--tk-serif-zh);
+    font-size: 68pt;
+    font-weight: 700;
+    color: var(--tk-title);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle-block {
+    margin-bottom: 22pt;
+  }
+  .subtitle-block h2 {
+    font-family: var(--tk-serif-zh);
+    font-size: 17pt;
+    font-weight: 400;
+    color: var(--tk-warm-gray);
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+  }
+
+  .desc-block {
+    margin-bottom: 32pt;
+    max-width: 210pt;
+  }
+  .desc-block p {
+    font-family: var(--tk-sans);
+    font-size: 10pt;
+    font-weight: 400;
+    color: var(--tk-muted);
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---- Badge: 绿色药丸标签 ---- */
+  .badge-row {
+    display: flex;
+    align-items: center;
+    gap: 7pt;
+  }
+  .badge-dot {
+    width: 7pt;
+    height: 7pt;
+    border-radius: 50%;
+    background: var(--tk-accent);
+    flex-shrink: 0;
+  }
+  .badge-text p {
+    font-family: var(--tk-sans);
+    font-size: 9pt;
+    font-weight: 500;
+    color: var(--tk-accent);
+    letter-spacing: 0.08em;
+  }
+
+  /* ---- Meta row ---- */
+  .meta-row {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 8pt;
+  }
+  .meta-row p {
+    font-family: var(--tk-sans);
+    font-size: 8pt;
+    font-weight: 400;
+    color: var(--tk-faint);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---- Right panel: 氛围区 ---- */
+  .right-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 极淡的几何点缀：大号半透明圆 */
+  .atmo-circle {
+    position: absolute;
+    right: -60pt;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 360pt;
+    height: 360pt;
+    border-radius: 50%;
+    border: 1px solid var(--tk-accent-08);
+  }
+  .atmo-circle-inner {
+    position: absolute;
+    right: 20pt;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 220pt;
+    height: 220pt;
+    border-radius: 50%;
+    border: 1px solid rgba(107, 143, 113, 0.06);
+  }
+
+  /* Terminal 暗示：极淡的 >_ 大字 */
+  .atmo-glyph {
+    position: absolute;
+    right: 80pt;
+    top: 50%;
+    transform: translateY(-48%);
+  }
+  .atmo-glyph p {
+    font-family: var(--tk-mono);
+    font-size: 160pt;
+    font-weight: 400;
+    color: var(--tk-accent-04);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  /* ---- Page indicator ---- */
+  .page-indicator {
+    position: absolute;
+    bottom: 28pt;
+    right: 44pt;
+  }
+  .page-indicator p {
+    font-family: var(--tk-sans);
+    font-size: 7.5pt;
+    font-weight: 300;
+    color: var(--tk-faint);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- ============ Left Panel: 叙事 ============ -->
+  <div class="left-panel">
+
+    <div class="category-label">
+      <p>终端工具深度指南 · 2026</p>
+    </div>
+
+    <div class="title-block">
+      <h1>tmux</h1>
+    </div>
+
+    <div class="subtitle-block">
+      <h2>让你的终端永不掉线</h2>
+    </div>
+
+    <div class="desc-block">
+      <p>
+        一个诞生于 2007 年的终端复用器，至今仍是开发者、运维工程师和服务端管理者最依赖的工具之一。
+      </p>
+    </div>
+
+    <!-- Badge -->
+    <div class="badge-row">
+      <div class="badge-dot"></div>
+      <div class="badge-text">
+        <p>Session · Window · Pane</p>
+      </div>
+    </div>
+
+    <!-- Meta -->
+    <div class="meta-row" style="margin-top:42pt;">
+      <p>Vol. 01</p>
+    </div>
+
+  </div>
+
+  <!-- ============ Right Panel: 氛围 ============ -->
+  <div class="right-panel">
+    <div class="atmo-circle"></div>
+    <div class="atmo-circle-inner"></div>
+    <div class="atmo-glyph">
+      <p>&gt;_</p>
+    </div>
+  </div>
+</div>
+
+<!-- Page indicator -->
+<div class="page-indicator">
+  <p>01 / 09</p>
+</div>
+
+</body>
+</html>
